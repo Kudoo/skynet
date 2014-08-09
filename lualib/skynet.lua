@@ -22,7 +22,7 @@ local skynet = {
 	PTYPE_HARBOR = 5,
 	PTYPE_SOCKET = 6,
 	PTYPE_ERROR = 7,
-	PTYPE_QUEUE = 8,
+	PTYPE_QUEUE = 8,	-- use in deprecated mqueue, use skynet.queue instead
 	PTYPE_DEBUG = 9,
 	PTYPE_LUA = 10,
 	PTYPE_SNAX = 11,
@@ -127,7 +127,7 @@ function suspend(co, result, command, param, size)
 	if not result then
 		local session = session_coroutine_id[co]
 		local addr = session_coroutine_address[co]
-		if session and session ~= 0  then
+		if session then
 			c.send(addr, skynet.PTYPE_ERROR, session, "")
 		end
 		session_coroutine_id[co] = nil
@@ -151,6 +151,9 @@ function suspend(co, result, command, param, size)
 		-- coroutine exit
 		session_coroutine_id[co] = nil
 		session_coroutine_address[co] = nil
+	elseif command == "QUIT" then
+		-- service exit
+		return
 	else
 		error("Unknown command : " .. command .. "\n" .. debug.traceback(co))
 	end
@@ -229,7 +232,10 @@ function skynet.self()
 end
 
 function skynet.localname(name)
-	return string_to_handle(c.command("QUERY", name))
+	local addr = c.command("QUERY", name)
+	if addr then
+		return string_to_handle(addr)
+	end
 end
 
 function skynet.launch(...)
@@ -257,10 +263,12 @@ function skynet.exit()
 		local address = session_coroutine_address[co]
 		local self = skynet.self()
 		if session~=0 and address then
-			skynet.redirect(self, address, "error", session, "")
+			skynet.redirect(address, self, "error", session, "")
 		end
 	end
 	c.command("EXIT")
+	-- quit service
+	coroutine_yield "QUIT"
 end
 
 function skynet.kill(name)
@@ -325,6 +333,9 @@ end
 
 function skynet.rawcall(addr, typename, msg, sz)
 	local p = proto[typename]
+	if watching_service[addr] == false then
+		error("Service is dead")
+	end
 	local session = assert(c.send(addr, p.id , nil , msg, sz), "call to invalid address")
 	return yield_call(addr, session)
 end

@@ -1,3 +1,30 @@
+v0.5.1 (2014-8-4)
+-----------
+* Bugfix : http module
+* Bugfix : multicast local channel delete
+* Bugfix : socket.read(fd)
+
+v0.5.0 (2014-7-28)
+-----------
+* skynet.exit will quit service immediately.
+* Add snax.gateserver, snax.loginserver, snax.msgserver
+* Simplify clientsocket lib
+* mongo driver support replica set
+* config file support read from ENV
+* add simple httpd (see examples/simpleweb.lua)
+
+v0.4.2 (2014-7-14)
+-----------
+* Bugfix : invalid negative socket id 
+* Add optional TCP_NODELAY support
+* Add worker thread weight
+* Add skynet.queue
+* Bugfix: socketchannel
+* cluster can throw error
+* Add readline and writeline to clientsocket lib
+* Add cluster.reload to reload config file
+* Add datacenter.wait
+
 v0.4.1 (2014-7-7)
 -----------
 * Add SERVICE_NAME in loader
